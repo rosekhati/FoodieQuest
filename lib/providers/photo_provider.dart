@@ -23,7 +23,7 @@ class PhotoProvider with ChangeNotifier {
     } catch (e) {
       debugPrint("Error fetching photos: $e");
     } finally {
-      // _isLoading = false;
+      _isLoading = false; // Fixed: was commented out
       notifyListeners();
     }
   }

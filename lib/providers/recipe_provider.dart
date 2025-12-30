@@ -51,6 +51,7 @@ class RecipeProvider with ChangeNotifier {
     } else {
       _favoriteIds.add(recipeId);
     }
+    notifyListeners(); // Ditambahkan agar UI langsung diperbarui
   }
 
   bool isFavorite(int recipeId) {

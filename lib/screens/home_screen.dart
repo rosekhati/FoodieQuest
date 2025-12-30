@@ -32,6 +32,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -102,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen>
                 return const Center(child: Text('No recipes found.'));
               }
               return ListView.builder(
-                itemCount: provider.recipes.length + 1,
+                itemCount: provider.recipes.length,
                 itemBuilder: (context, index) {
                   final recipe = provider.recipes[index];
                   return ListTile(
@@ -121,11 +128,14 @@ class _HomeScreenState extends State<HomeScreen>
                     title: Text(recipe.title),
                     subtitle: Text(recipe.description,
                         maxLines: 2, overflow: TextOverflow.ellipsis),
-                    trailing: Icon(
-                      provider.isFavorite(recipe.id)
-                          ? Icons.favorite
-                          : Icons.favorite_border,
-                      color: provider.isFavorite(recipe.id) ? Colors.red : null,
+                    trailing: IconButton(
+                      icon: Icon(
+                        provider.isFavorite(recipe.id)
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color: provider.isFavorite(recipe.id) ? Colors.red : null,
+                      ),
+                      onPressed: () => provider.toggleFavorite(recipe.id),
                     ),
                     onTap: () {
                       Navigator.push(
@@ -158,6 +168,18 @@ class _HomeScreenState extends State<HomeScreen>
           itemBuilder: (context, index) {
             final recipe = favorites[index];
             return ListTile(
+              leading: recipe.imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: recipe.imageUrl,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) =>
+                          const SizedBox(width: 50, height: 50),
+                      errorWidget: (_, __, ___) =>
+                          const Icon(Icons.broken_image),
+                    )
+                  : const Icon(Icons.restaurant),
               title: Text(recipe.title),
               subtitle: Text('Rating: ${recipe.rating}'),
               trailing: IconButton(
@@ -191,26 +213,30 @@ class _HomeScreenState extends State<HomeScreen>
           return const Center(child: Text('No photos uploaded yet.'));
         }
         return GridView.builder(
+          padding: const EdgeInsets.all(8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 4,
-            mainAxisSpacing: 4,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
           ),
           itemCount: provider.photos.length,
           itemBuilder: (context, index) {
             final photo = provider.photos[index];
-            return GridTile(
-              footer: GridTileBar(
-                backgroundColor: Colors.black54,
-                title: Text(photo.caption),
-                subtitle: Text(DateHelper.formatRelative(photo.createdAt)),
-              ),
-              child: CachedNetworkImage(
-                imageUrl: photo.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (_, __) =>
-                    const Center(child: CircularProgressIndicator()),
-                errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: GridTile(
+                footer: GridTileBar(
+                  backgroundColor: Colors.black54,
+                  title: Text(photo.caption, style: const TextStyle(fontSize: 12)),
+                  subtitle: Text(DateHelper.formatRelative(photo.createdAt), style: const TextStyle(fontSize: 10)),
+                ),
+                child: CachedNetworkImage(
+                  imageUrl: photo.imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) =>
+                      const Center(child: CircularProgressIndicator()),
+                  errorWidget: (_, __, ___) => const Icon(Icons.broken_image, size: 40),
+                ),
               ),
             );
           },

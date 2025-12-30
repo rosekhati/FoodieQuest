@@ -18,16 +18,20 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
 
   Future<void> _pickImage() async {
     final file = await ImageHelper.pickImage(ImageSource.gallery);
-    setState(() {
-      _image = file;
-    });
+    if (file != null) {
+      setState(() {
+        _image = file;
+      });
+    }
   }
 
   Future<void> _takePhoto() async {
     final file = await ImageHelper.pickImage(ImageSource.camera);
-    setState(() {
-      _image = file;
-    });
+    if (file != null) {
+      setState(() {
+        _image = file;
+      });
+    }
   }
 
   Future<void> _upload(BuildContext context) async {
@@ -51,10 +55,16 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
   }
 
   @override
+  void dispose() {
+    _captionController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Upload Photo')),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -63,40 +73,59 @@ class _UploadPhotoScreenState extends State<UploadPhotoScreen> {
               child: Container(
                 height: 200,
                 width: double.infinity,
-                color: Colors.grey[300],
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[400]!),
+                ),
                 child: _image != null
-                    ? Image.file(_image!, fit: BoxFit.cover)
-                    : const Icon(Icons.add_a_photo, size: 50),
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(_image!, fit: BoxFit.cover),
+                      )
+                    : const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
               ),
             ),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                TextButton.icon(
+                ElevatedButton.icon(
                   onPressed: _pickImage,
                   icon: const Icon(Icons.photo_library),
                   label: const Text('Gallery'),
                 ),
-                TextButton.icon(
+                ElevatedButton.icon(
                   onPressed: _takePhoto,
                   icon: const Icon(Icons.camera_alt),
                   label: const Text('Camera'),
                 ),
               ],
             ),
+            const SizedBox(height: 16),
             TextField(
               controller: _captionController,
-              decoration: const InputDecoration(labelText: 'Caption'),
+              decoration: const InputDecoration(
+                labelText: 'Caption (Optional)',
+                border: OutlineInputBorder(),
+              ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Consumer<PhotoProvider>(
               builder: (context, provider, child) {
                 return provider.isUploading
                     ? const CircularProgressIndicator()
-                    : ElevatedButton(
-                        onPressed:
-                            _image != null ? null : () => _upload(context),
-                        child: const Text('Upload'),
+                    : SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _image != null ? () => _upload(context) : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Upload Photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
                       );
               },
             ),
